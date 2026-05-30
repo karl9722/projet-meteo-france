@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS climate_comparison;
 DROP VIEW IF EXISTS yearly_temperature;
 DROP VIEW IF EXISTS yearly_rain;
 DROP VIEW IF EXISTS hot_days;
@@ -31,3 +32,28 @@ FROM weather_observations
 WHERE tx >= 30
 GROUP BY year
 ORDER BY year;
+
+CREATE VIEW climate_comparison AS
+SELECT
+    'historical'::text AS period,
+    EXTRACT(YEAR FROM date) AS year,
+    AVG(tx) AS avg_max_temperature,
+    AVG(tn) AS avg_min_temperature,
+    SUM(rr) AS total_rain,
+    COUNT(*) FILTER (WHERE tx >= 30) AS hot_days
+FROM weather_historical
+WHERE date IS NOT NULL
+GROUP BY EXTRACT(YEAR FROM date)
+
+UNION ALL
+
+SELECT
+    'modern'::text AS period,
+    EXTRACT(YEAR FROM date) AS year,
+    AVG(tx) AS avg_max_temperature,
+    AVG(tn) AS avg_min_temperature,
+    SUM(rr) AS total_rain,
+    COUNT(*) FILTER (WHERE tx >= 30) AS hot_days
+FROM weather_modern
+WHERE date IS NOT NULL
+GROUP BY EXTRACT(YEAR FROM date);
